@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKITAMI CARGO — Калькулятор доставки из Китая</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--text);
+        }
+
+        .logo p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .result-card {
+            background-color: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .result-row:last-child {
+            margin-bottom: 0;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 13px;
+            margin-top: 12px;
+            color: var(--accent);
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">
+            <h1>SKITAMI CARGO</h1>
+            <p>Калькулятор стоимости доставки из Китая</p>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Стоимость товара (¥ юани)</label>
+            <input type="number" id="price" placeholder="Например: 1000" oninput="calculate()">
+        </div>
+
+        <div class="form-group">
+            <label for="weight">Вес груза (кг)</label>
+            <input type="number" step="0.1" id="weight" placeholder="Например: 5" oninput="calculate()">
+        </div>
+
+        <div class="form-group">
+            <label for="clientName">Ваше имя</label>
+            <input type="text" id="clientName" placeholder="Иван">
+        </div>
+
+        <div class="form-group">
+            <label for="clientPhone">Телефон или Telegram</label>
+            <input type="text" id="clientPhone" placeholder="+7 999 000-00-00">
+        </div>
+
+        <div class="result-card">
+            <div class="result-row">
+                <span>Товар в рублях:</span>
+                <span id="resProduct">0 ₽</span>
+            </div>
+            <div class="result-row">
+                <span>Доставка и услуги:</span>
+                <span id="resDelivery">0 ₽</span>
+            </div>
+            <div class="result-row">
+                <span>Итого для клиента:</span>
+                <span id="resTotal">0 ₽</span>
+            </div>
+        </div>
+
+        <button onclick="sendOrder()">Оставить заявку</button>
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <script>
+        // ВНИМАНИЕ: Сюда нужно вставить адрес твоего веб-приложения Google Apps Script (заканчивающийся на /exec)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIh9ROUzD2IsGob9VHGPxB16CrOCGjGJL_OoPp_Fc/dev'; 
+
+        // Базовые константы тарифов (синхронизированы с таблицей)
+        const RATE = 12.50;        // Курс юаня
+        const CLIENT_PRICE_KG = 220; // Тариф за 1 кг
+
+        function calculate() {
+            let price = parseFloat(document.getElementById('price').value) || 0;
+            let weight = parseFloat(document.getElementById('weight').value) || 0;
+
+            let productRub = price * RATE;
+            let deliveryRub = weight * CLIENT_PRICE_KG;
+            let total = productRub + deliveryRub;
+
+            document.getElementById('resProduct').innerText = Math.round(productRub).toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('resDelivery').innerText = Math.round(deliveryRub).toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('resTotal').innerText = Math.round(total).toLocaleString('ru-RU') + ' ₽';
+        }
+
+        function sendOrder() {
+            let price = parseFloat(document.getElementById('price').value) || 0;
+            let weight = parseFloat(document.getElementById('weight').value) || 0;
+            let clientName = document.getElementById('clientName').value.trim();
+            let clientPhone = document.getElementById('clientPhone').value.trim();
+
+            if (price <= 0 || weight <= 0) {
+                alert('Пожалуйста, укажите корректную стоимость и вес товара.');
+                return;
+            }
+
+            if (!clientName || !clientPhone) {
+                alert('Пожалуйста, укажите ваше имя и контакт для связи.');
+                return;
+            }
+
+            let msg = document.getElementById('statusMsg');
+            msg.innerText = 'Отправка заявки...';
+
+            let data = {
+                price: price,
+                weight: weight,
+                clientName: clientName,
+                clientPhone: clientPhone,
+                contactType: 'Telegram Mini App / Сайт',
+                comment: 'Заявка с сайта GitHub'
+            };
+
+            // Отправка данных на бэкенд Google Таблицы
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                msg.innerText = '✅ Заявка успешно отправлена! Мы свяжемся с вами.';
+                setTimeout(() => {
+                    msg.innerText = '';
+                }, 5000);
+            })
+            .catch(err => {
+                console.error(err);
+                msg.innerText = '❌ Ошибка отправки. Попробуйте еще раз.';
+            });
+        }
+    </script>
+</body>
+</html>
